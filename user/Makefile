@@ -14,6 +14,8 @@ USERLIB := printf.o \
 		syscall_lib.o \
 		ipc.o \
 		string.o \
+        sh_history.o \
+        sh_curpath.o \
 		fd.o \
 		pageref.o \
 		file.o \
@@ -27,7 +29,7 @@ USERLIB := printf.o \
 CFLAGS += -nostdlib -static
 
 
-all: echo.x echo.b  num.x num.b testptelibrary.b testptelibrary.x fktest.x fktest.b pingpong.x pingpong.b idle.x testarg.b testpipe.x testpiperace.x icode.x init.b sh.b cat.b ls.b fstest.x fstest.b $(USERLIB) entry.o syscall_wrap.o
+all: echo.x echo.b  num.x num.b testptelibrary.b testptelibrary.x fktest.x fktest.b pingpong.x pingpong.b idle.x testarg.b testpipe.x testpiperace.x icode.x init.b sh.b cat.b ls.b fstest.x fstest.b tree.b clear.b touch.b mkdir.b history.b $(USERLIB) entry.o syscall_wrap.o cd.b rm.b unset.b set.b export.b testhang.b
 
 %.x: %.b.c 
 	echo cc1 $< 

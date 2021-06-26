@@ -46,7 +46,7 @@
  * where HEADNAME is the name of the structure to be defined, and TYPE is the type of the
  * elements to be linked into the list.
  */
-#define LIST_HEAD(name, type)                                            \
+#define LIST_HEAD(name, type)                                           	\
         struct name {                                                           \
                 struct type *lh_first;  /* first element */                     \
         }
@@ -66,7 +66,7 @@
  * this very LIST_ENTRY, so that if we want to remove this list entry,
  * we can do *le_prev = le_next to update the structure pointing at us.
  */
-#define LIST_ENTRY(type)                                                    \
+#define LIST_ENTRY(type)                                                	\
         struct {                                                                \
                 struct type *le_next;   /* next element */                      \
                 struct type **le_prev;  /* address of previous next element */  \
@@ -115,11 +115,11 @@
                 LIST_NEXT((listelm), field) = (elm);                                    \
                 (elm)->field.le_prev = &(LIST_NEXT((listelm), field));                    \
             } while (0)
-// Note: assign a to b <==> a = b
-//Step 1, assign elm.next to listelem.next.
-//Step 2: Judge whether listelm.next is NULL, if not, then assign listelm.pre to a proper value.
-//step 3: Assign listelm.next to a proper value.
-//step 4: Assign elm.pre to a proper value.
+        // Note: assign a to b <==> a = b
+        //Step 1, assign elm.next to listelem.next.
+        //Step 2: Judge whether listelm.next is NULL, if not, then assign listelm.pre to a proper value.
+        //step 3: Assign listelm.next to a proper value.
+        //step 4: Assign elm.pre to a proper value.
 
 
 /*
@@ -127,7 +127,7 @@
  * already in the list.  The "field" name is the link element
  * as above.
  */
-#define LIST_INSERT_BEFORE(listelm, elm, field) do {                        \
+#define LIST_INSERT_BEFORE(listelm, elm, field) do {		                \
                 (elm)->field.le_prev = (listelm)->field.le_prev;                \
                 LIST_NEXT((elm), field) = (listelm);                            \
                 *(listelm)->field.le_prev = (elm);                              \
@@ -138,8 +138,8 @@
  * Insert the element "elm" at the head of the list named "head".
  * The "field" name is the link element as above.
  */
-#define LIST_INSERT_HEAD(head, elm, field) do {                              \
-                if ((LIST_NEXT((elm), field) = LIST_FIRST((head))) != NULL)              \
+#define LIST_INSERT_HEAD(head, elm, field) do {                   		      \
+                if ((LIST_NEXT((elm), field) = LIST_FIRST((head))) != NULL)    	      \
                         LIST_FIRST((head))->field.le_prev = &LIST_NEXT((elm), field); \
                 LIST_FIRST((head)) = (elm);                                           \
                 (elm)->field.le_prev = &LIST_FIRST((head));                           \
@@ -171,7 +171,7 @@
  * Remove the element "elm" from the list.
  * The "field" name is the link element as above.
  */
-#define LIST_REMOVE(elm, field) do {                                        \
+#define LIST_REMOVE(elm, field) do {                                    	\
                 if (LIST_NEXT((elm), field) != NULL)                            \
                         LIST_NEXT((elm), field)->field.le_prev =                \
                                         (elm)->field.le_prev;                   \
@@ -181,13 +181,13 @@
 /*
  * Tail queue definitions.
  */
-#define TAILQ_HEAD(name, type)                                            \
+#define TAILQ_HEAD(name, type)                                          	\
         struct name {                                                           \
                 struct type *tqh_first; /* first element */                     \
                 struct type **tqh_last; /* addr of last next element */         \
         }
 
-#define TAILQ_ENTRY(type)                                                \
+#define TAILQ_ENTRY(type)                                               	\
         struct {                                                                \
                 struct type *tqe_next;  /* next element */                      \
                 struct type **tqe_prev; /* address of previous next element */  \

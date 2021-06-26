@@ -32,11 +32,11 @@ typedef u_int32_t        size_t;
 
 
 #define MIN(_a, _b)	\
-    ({		\
-        typeof(_a) __a = (_a);	\
-        typeof(_b) __b = (_b);	\
-        __a <= __b ? __a : __b;	\
-    })
+	({		\
+		typeof(_a) __a = (_a);	\
+		typeof(_b) __b = (_b);	\
+		__a <= __b ? __a : __b;	\
+	})
 
 /* Static assert, for compile-time assertion checking */
 #define static_assert(c) switch (c) case 0: case(c):

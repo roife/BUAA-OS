@@ -36,13 +36,13 @@ symbol:         .frame  sp, framesize, rpc
                 .end    function;                       \
                 .size   function,.-function
 
-#define    EXPORT(symbol)                                  \
-                            .globl    symbol;                \
-                symbol:
+#define	EXPORT(symbol)                                  \
+							.globl	symbol; 				\
+				symbol:
 
-#define FEXPORT(symbol)                    \
-                        .globl    symbol;            \
-                        .type    symbol,@function;        \
-                symbol:
+#define FEXPORT(symbol)					\
+						.globl	symbol; 			\
+						.type	symbol,@function;		\
+				symbol:
 
 

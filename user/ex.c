@@ -1,6 +1,7 @@
 #include "lib.h"
 
-static void user_myoutput(void *arg, const char *s, int l) {
+static void user_myoutput(void *arg, const char *s, int l)
+{
     int i;
 
     // special termination call
@@ -13,7 +14,8 @@ static void user_myoutput(void *arg, const char *s, int l) {
     }
 }
 
-void uwritef(char *fmt, ...) {
+void uwritef(char *fmt, ...)
+{
     va_list ap;
     va_start(ap, fmt);
     user_lp_Print(user_myoutput, 0, fmt, ap);

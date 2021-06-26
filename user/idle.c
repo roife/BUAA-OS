@@ -1,6 +1,7 @@
 #include "lib.h"
 
-umain() {
-    while (1)
-        writef("IDLE!");
+umain()
+{
+	while(1)
+		writef("IDLE!");
 }
