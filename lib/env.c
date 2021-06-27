@@ -14,7 +14,7 @@ struct Env *curenv = NULL;            // the current env
 
 static struct Env_list env_free_list;    // Free list
 struct Env_list env_sched_list[2];      // Runnable list
- 
+
 extern Pde *boot_pgdir;
 extern char *KERNEL_SP;
 
@@ -51,8 +51,7 @@ static void asid_free(u_int i) {
     asid_bitmap[index] &= ~(1 << inner);
 }
 
-u_int mkenvid(struct Env *e)
-{
+u_int mkenvid(struct Env *e) {
     u_int idx = e - envs;
     u_int asid = asid_alloc();
     return (asid << (1 + LOG2NENV)) | (1 << LOG2NENV) | idx;
@@ -73,8 +72,7 @@ u_int mkenvid(struct Env *e)
  *  return -E_BAD_ENV on error,and sets *penv to NULL.
  */
 /*** exercise 3.3 ***/
-int envid2env(u_int envid, struct Env **penv, int checkperm)
-{
+int envid2env(u_int envid, struct Env **penv, int checkperm) {
     struct Env *e;
     /* Hint: If envid is zero, return curenv.*/
     /*Step 1: Assign value to e using envid. */
@@ -118,8 +116,7 @@ int envid2env(u_int envid, struct Env **penv, int checkperm)
  */
 /*** exercise 3.2 ***/
 void
-env_init(void)
-{
+env_init(void) {
     int i;
     /*Step 1: Initial env_free_list. */
     LIST_INIT(&env_free_list);
@@ -132,7 +129,7 @@ env_init(void)
      * Choose the correct loop order to finish the insertion.
      * Make sure, after the insertion, the order of envs in the list
      * should be the same as it in the envs array. */
-    for (i = NENV-1; i>=0; --i) {
+    for (i = NENV - 1; i >= 0; --i) {
         envs[i].env_status = ENV_FREE;
         LIST_INSERT_HEAD(&env_free_list, &envs[i], env_link);
     }
@@ -148,8 +145,7 @@ env_init(void)
  */
 /*** exercise 3.4 ***/
 static int
-env_setup_vm(struct Env *e)
-{
+env_setup_vm(struct Env *e) {
 
     int i, r;
     struct Page *p = NULL;
@@ -165,13 +161,13 @@ env_setup_vm(struct Env *e)
     }
 
     ++p->pp_ref;
-    pgdir = (Pde*) page2kva(p);
+    pgdir = (Pde *) page2kva(p);
 
     /*Step 2: Zero pgdir's field before UTOP. */
-    for(i = 0; i < PDX(UTOP); ++i) pgdir[i] = 0;
+    for (i = 0; i < PDX(UTOP); ++i) pgdir[i] = 0;
 
     /*Step 3: Copy kernel's boot_pgdir to pgdir. */
-    
+
 
     /* Hint:
      *  The VA space of all envs is identical above UTOP
@@ -179,10 +175,8 @@ env_setup_vm(struct Env *e)
      *  See ./include/mmu.h for layout.
      *  Can you use boot_pgdir as a template?
      */
-    for (i = PDX(UTOP); i < PTE2PT; i++)
-    {
-        if (i!=PDX(VPT) && i!=PDX(UVPT))
-        {
+    for (i = PDX(UTOP); i < PTE2PT; i++) {
+        if (i != PDX(VPT) && i != PDX(UVPT)) {
             pgdir[i] = boot_pgdir[i];
         }
     }
@@ -192,8 +186,8 @@ env_setup_vm(struct Env *e)
     e->env_cr3 = PADDR(pgdir);
 
     // UVPT maps the env's own page table, with read-only permission.
-    pgdir[PDX(VPT)]  = e->env_cr3;
-    pgdir[PDX(UVPT)]  = e->env_cr3 | PTE_V | PTE_R;
+    pgdir[PDX(VPT)] = e->env_cr3;
+    pgdir[PDX(UVPT)] = e->env_cr3 | PTE_V | PTE_R;
     return 0;
 }
 
@@ -218,19 +212,17 @@ env_setup_vm(struct Env *e)
  */
 /*** exercise 3.5 ***/
 int
-env_alloc(struct Env **new, u_int parent_id)
-{
+env_alloc(struct Env **new, u_int parent_id) {
     int r;
     struct Env *e;
 
     /*Step 1: Get a new Env from env_free_list*/
-    if (LIST_EMPTY(&env_free_list))
-    {
+    if (LIST_EMPTY(&env_free_list)) {
         *new = NULL;
         return -E_NO_FREE_ENV;
     }
     e = LIST_FIRST(&env_free_list);
-   
+
 
     /*Step 2: Call certain function(has been implemented) to init kernel memory layout for this new Env.
      *The function mainly maps the kernel address to this new Env address. */
@@ -276,9 +268,8 @@ env_alloc(struct Env **new, u_int parent_id)
  */
 /*** exercise 3.6 ***/
 static int load_icode_mapper(u_long va, u_int32_t sgsize,
-                             u_char *bin, u_int32_t bin_size, void *user_data)
-{
-    struct Env *env = (struct Env *)user_data;
+                             u_char *bin, u_int32_t bin_size, void *user_data) {
+    struct Env *env = (struct Env *) user_data;
     struct Page *p = NULL;
     u_long i = 0;
     int r;
@@ -287,12 +278,12 @@ static int load_icode_mapper(u_long va, u_int32_t sgsize,
 
     if (offset > 0) { // va not align
         p = page_lookup(env->env_pgdir, va + i, NULL);
-        if(p == 0) {
+        if (p == 0) {
             if ((r = page_alloc(&p)) != 0) return r;
             page_insert(env->env_pgdir, p, va + i, PTE_R);
         }
         size = MIN(bin_size - i, BY2PG - offset);
-        bcopy((void*)bin, (void*)(page2kva(p) + offset), size);
+        bcopy((void *) bin, (void *) (page2kva(p) + offset), size);
         i = i + size;
     }
     /*Step 1: load all content of bin into memory. */
@@ -300,8 +291,8 @@ static int load_icode_mapper(u_long va, u_int32_t sgsize,
         /* Hint: You should alloc a page and increase the reference count of it. */
         size = MIN(BY2PG, bin_size - i);
         if ((r = page_alloc(&p)) != 0) return r;
-        page_insert(env->env_pgdir, p ,va + i, PTE_R);
-        bcopy((void*)bin + i, (void*)(page2kva(p)), size);
+        page_insert(env->env_pgdir, p, va + i, PTE_R);
+        bcopy((void *) bin + i, (void *) (page2kva(p)), size);
         i += size;
     }
     /*Step 2: alloc pages to reach `sgsize` when `bin_size` < `sgsize`.
@@ -309,19 +300,19 @@ static int load_icode_mapper(u_long va, u_int32_t sgsize,
     offset = va + i - ROUNDDOWN(va + i, BY2PG);
     if (offset) {
         p = page_lookup(env->env_pgdir, va + i, NULL);
-        if(p == 0) {
+        if (p == 0) {
             if ((r = page_alloc(&p)) != 0) return r;
             page_insert(env->env_pgdir, p, va + i, PTE_R);
         }
         size = MIN(sgsize - i, BY2PG - offset);
-        bzero((void*)(page2kva(p) + offset), size);
+        bzero((void *) (page2kva(p) + offset), size);
         i = i + size;
     }
     while (i < sgsize) {
         size = MIN(BY2PG, sgsize - i);
         if ((r = page_alloc(&p)) != 0) return r;
         page_insert(env->env_pgdir, p, va + i, PTE_R);
-        bzero((void*)page2kva(p), size);
+        bzero((void *) page2kva(p), size);
         i += size;
     }
     return 0;
@@ -340,8 +331,7 @@ static int load_icode_mapper(u_long va, u_int32_t sgsize,
  */
 /*** exercise 3.7 ***/
 static void
-load_icode(struct Env *e, u_char *binary, u_int size)
-{
+load_icode(struct Env *e, u_char *binary, u_int size) {
     /* Hint:
      *  You must figure out which permissions you'll need
      *  for the different mappings you create.
@@ -363,7 +353,7 @@ load_icode(struct Env *e, u_char *binary, u_int size)
     if (r != 0) return;
 
     /*Step 3:load the binary using elf loader. */
-    r = load_elf(binary, size, &entry_point, (void*)e, load_icode_mapper);
+    r = load_elf(binary, size, &entry_point, (void *) e, load_icode_mapper);
     if (r != 0) return;
 
     /*Step 4:Set CPU's PC register as appropriate value. */
@@ -381,12 +371,11 @@ load_icode(struct Env *e, u_char *binary, u_int size)
  */
 /*** exercise 3.8 ***/
 void
-env_create_priority(u_char *binary, int size, int priority)
-{
-        struct Env *e;
-        int r;
+env_create_priority(u_char *binary, int size, int priority) {
+    struct Env *e;
+    int r;
     /*Step 1: Use env_alloc to alloc a new env. */
-    if((r = env_alloc(&e, 0)) != 0) return;
+    if ((r = env_alloc(&e, 0)) != 0) return;
     /*Step 2: assign priority to the new env. */
     e->env_pri = priority;
     /*Step 3: Use load_icode() to load the named elf binary,
@@ -402,9 +391,8 @@ env_create_priority(u_char *binary, int size, int priority)
  */
 /*** exercise 3.8 ***/
 void
-env_create(u_char *binary, int size)
-{
-     /*Step 1: Use env_create_priority to alloc a new env with priority 1 */
+env_create(u_char *binary, int size) {
+    /*Step 1: Use env_create_priority to alloc a new env with priority 1 */
     env_create_priority(binary, size, 1);
 
 }
@@ -413,8 +401,7 @@ env_create(u_char *binary, int size)
  *  Frees env e and all memory it uses.
  */
 void
-env_free(struct Env *e)
-{
+env_free(struct Env *e) {
     Pte *pt;
     u_int pdeno, pteno, pa;
 
@@ -429,7 +416,7 @@ env_free(struct Env *e)
         }
         /* Hint: find the pa and va of the page table. */
         pa = PTE_ADDR(e->env_pgdir[pdeno]);
-        pt = (Pte *)KADDR(pa);
+        pt = (Pte *) KADDR(pa);
         /* Hint: Unmap all PTEs in this page table. */
         for (pteno = 0; pteno <= PTX(~0); pteno++)
             if (pt[pteno] & PTE_V) {
@@ -456,8 +443,7 @@ env_free(struct Env *e)
  *  if e is the current env.
  */
 void
-env_destroy(struct Env *e)
-{
+env_destroy(struct Env *e) {
     /* Hint: free e. */
     env_free(e);
 
@@ -465,8 +451,8 @@ env_destroy(struct Env *e)
     if (curenv == e) {
         curenv = NULL;
         /* Hint:Why this? */
-        bcopy((void *)KERNEL_SP - sizeof(struct Trapframe),
-              (void *)TIMESTACK - sizeof(struct Trapframe),
+        bcopy((void *) KERNEL_SP - sizeof(struct Trapframe),
+              (void *) TIMESTACK - sizeof(struct Trapframe),
               sizeof(struct Trapframe));
         //printf("i am killed ... \n");
         sched_yield();
@@ -474,6 +460,7 @@ env_destroy(struct Env *e)
 }
 
 extern void env_pop_tf(struct Trapframe *tf, int id);
+
 extern void lcontext(u_int contxt);
 
 /* Overview:
@@ -489,21 +476,20 @@ extern void lcontext(u_int contxt);
  */
 /*** exercise 3.10 ***/
 void
-env_run(struct Env *e)
-{
+env_run(struct Env *e) {
     /*Step 1: save register state of curenv. */
     /* Hint: if there is an environment running, you should do
     *  switch the context and save the registers. You can imitate env_destroy() 's behaviors.*/
     if (curenv != NULL) {
         struct Trapframe *old;
-        old = (struct Trapframe*) (TIMESTACK - sizeof(struct Trapframe));
+        old = (struct Trapframe *) (TIMESTACK - sizeof(struct Trapframe));
         bcopy(old, &(curenv->env_tf), sizeof(struct Trapframe));
-        curenv -> env_tf.pc = curenv -> env_tf.cp0_epc;
+        curenv->env_tf.pc = curenv->env_tf.cp0_epc;
     }
 
     /*Step 2: Set 'curenv' to the new environment. */
     curenv = e;
-    curenv -> env_status = ENV_RUNNABLE;
+    curenv->env_status = ENV_RUNNABLE;
 
     /*Step 3: Use lcontext() to switch to its address space. */
     lcontext(curenv->env_pgdir);
@@ -516,97 +502,96 @@ env_run(struct Env *e)
      */
     env_pop_tf(&(e->env_tf), GET_ENV_ASID(e->env_id));
 }
-void env_check()
-{
-        struct Env *temp, *pe, *pe0, *pe1, *pe2;
-        struct Env_list fl;
-        int re = 0;
-     // should be able to allocate three envs
+
+void env_check() {
+    struct Env *temp, *pe, *pe0, *pe1, *pe2;
+    struct Env_list fl;
+    int re = 0;
+    // should be able to allocate three envs
     pe0 = 0;
-        pe1 = 0;
-        pe2 = 0;
-        assert(env_alloc(&pe0, 0) == 0);
-        assert(env_alloc(&pe1, 0) == 0);
-        assert(env_alloc(&pe2, 0) == 0);
+    pe1 = 0;
+    pe2 = 0;
+    assert(env_alloc(&pe0, 0) == 0);
+    assert(env_alloc(&pe1, 0) == 0);
+    assert(env_alloc(&pe2, 0) == 0);
 
-        assert(pe0);
-        assert(pe1 && pe1 != pe0);
-        assert(pe2 && pe2 != pe1 && pe2 != pe0);
+    assert(pe0);
+    assert(pe1 && pe1 != pe0);
+    assert(pe2 && pe2 != pe1 && pe2 != pe0);
 
-     // temporarily steal the rest of the free envs
-     fl = env_free_list;
+    // temporarily steal the rest of the free envs
+    fl = env_free_list;
     // now this env_free list must be empty!!!!
     LIST_INIT(&env_free_list);
 
     // should be no free memory
-     assert(env_alloc(&pe, 0) == -E_NO_FREE_ENV);
+    assert(env_alloc(&pe, 0) == -E_NO_FREE_ENV);
 
     // recover env_free_list
     env_free_list = fl;
 
-        printf("pe0->env_id %d\n",pe0->env_id);
-        printf("pe1->env_id %d\n",pe1->env_id);
-        printf("pe2->env_id %d\n",pe2->env_id);
+    printf("pe0->env_id %d\n", pe0->env_id);
+    printf("pe1->env_id %d\n", pe1->env_id);
+    printf("pe2->env_id %d\n", pe2->env_id);
 
-        assert(pe0->env_id == 2048);
-        assert(pe1->env_id == 4097);
-        assert(pe2->env_id == 6146);
-        printf("env_init() work well!\n");
+    assert(pe0->env_id == 2048);
+    assert(pe1->env_id == 4097);
+    assert(pe2->env_id == 6146);
+    printf("env_init() work well!\n");
 
-     /* check envid2env work well */
-     pe2->env_status = ENV_FREE;
-        re = envid2env(pe2->env_id, &pe, 0);
+    /* check envid2env work well */
+    pe2->env_status = ENV_FREE;
+    re = envid2env(pe2->env_id, &pe, 0);
 
-        assert(pe == 0 && re == -E_BAD_ENV);
+    assert(pe == 0 && re == -E_BAD_ENV);
 
-        pe2->env_status = ENV_RUNNABLE;
-        re = envid2env(pe2->env_id, &pe, 0);
+    pe2->env_status = ENV_RUNNABLE;
+    re = envid2env(pe2->env_id, &pe, 0);
 
-        assert(pe->env_id == pe2->env_id &&re == 0);
+    assert(pe->env_id == pe2->env_id && re == 0);
 
-        temp = curenv;
-        curenv = pe0;
-        re = envid2env(pe2->env_id, &pe, 1);
-        assert(pe == 0 && re == -E_BAD_ENV);
-        curenv = temp;
-        printf("envid2env() work well!\n");
+    temp = curenv;
+    curenv = pe0;
+    re = envid2env(pe2->env_id, &pe, 1);
+    assert(pe == 0 && re == -E_BAD_ENV);
+    curenv = temp;
+    printf("envid2env() work well!\n");
 
     /* check env_setup_vm() work well */
-    printf("pe1->env_pgdir %x\n",pe1->env_pgdir);
-        printf("pe1->env_cr3 %x\n",pe1->env_cr3);
+    printf("pe1->env_pgdir %x\n", pe1->env_pgdir);
+    printf("pe1->env_cr3 %x\n", pe1->env_cr3);
 
-        assert(pe2->env_pgdir[PDX(UTOP)] == boot_pgdir[PDX(UTOP)]);
-        assert(pe2->env_pgdir[PDX(UTOP)-1] == 0);
-        printf("env_setup_vm passed!\n");
+    assert(pe2->env_pgdir[PDX(UTOP)] == boot_pgdir[PDX(UTOP)]);
+    assert(pe2->env_pgdir[PDX(UTOP) - 1] == 0);
+    printf("env_setup_vm passed!\n");
 
-        assert(pe2->env_tf.cp0_status == 0x10001004);
-        printf("pe2`s sp register %x\n",pe2->env_tf.regs[29]);
-        printf("env_check() succeeded!\n");
+    assert(pe2->env_tf.cp0_status == 0x10001004);
+    printf("pe2`s sp register %x\n", pe2->env_tf.regs[29]);
+    printf("env_check() succeeded!\n");
 }
 
 // String Functions
-char* strcpy(char *dst, const char *src) {
+char *strcpy(char *dst, const char *src) {
     char *ret;
     ret = dst;
-    while ((*dst++ = *src++) != 0);   
+    while ((*dst++ = *src++) != 0);
     return ret;
 }
 
 u_int strhash(const char *str) {
-   unsigned int hash = 5381;
-   unsigned int i    = 0;
-   while(*str) hash = ((hash << 5) + hash) + (*str++);
-   return hash % ((1 << 8) - 1);
+    unsigned int hash = 5381;
+    unsigned int i = 0;
+    while (*str) hash = ((hash << 5) + hash) + (*str++);
+    return hash % ((1 << 8) - 1);
 }
 
 int
-strcmp(const char *p, const char *q) 
-{
-    while (*p && *p == *q) 
+strcmp(const char *p, const char *q) {
+    while (*p && *p == *q)
         p++, q++;
-    if ((u_int)*p < (u_int)*q)
-        return -1; 
-    if ((u_int)*p > (u_int)*q)
+    if ((u_int) * p < (u_int) * q)
+        return -1;
+    if ((u_int) * p > (u_int) * q)
         return 1;
     return 0;
 }

@@ -14,8 +14,8 @@
 /*** exercise 3.14 ***/
 #define cur_list env_sched_list[point]
 #define nxt_list env_sched_list[!point]
-void sched_yield(void)
-{
+
+void sched_yield(void) {
     static int count = 0; // remaining time slices of current env
     static int point = 0; // current env_sched_list index
     struct Env *nxt_env;
@@ -74,5 +74,6 @@ void sched_yield(void)
      *  LIST_INSERT_TAIL, LIST_REMOVE, LIST_FIRST, LIST_EMPTY
      */
 }
+
 #undef cur_list
 #undef nxt_list

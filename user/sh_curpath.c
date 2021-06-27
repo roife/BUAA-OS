@@ -1,4 +1,5 @@
 #include "lib.h"
+
 const char *CURPATH_KEY = "curpath";
 
 void curpath_init(char *path) {
@@ -21,7 +22,7 @@ int curpath_get_parent(char *path) {
     if ((r = curpath_get(path)) < 0) return r;
     if (strlen(path) == 1) return 0;
 
-    for(i = strlen(path) - 2; path[i - 1] != '/'; i--);
+    for (i = strlen(path) - 2; path[i - 1] != '/'; i--);
     path[i] = 0;
 }
 

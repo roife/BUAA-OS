@@ -4,8 +4,7 @@ int flag[256];
 
 
 void
-mkdir(char *path, char *prefix)
-{ 
+mkdir(char *path, char *prefix) {
     int r, fd;
     struct Stat st;
     char curpath[MAXPATHLEN] = {'\0'};
@@ -13,18 +12,15 @@ mkdir(char *path, char *prefix)
     if ((r = curpath_get(curpath)) < 0) {
         fwritef(1, "mkdir: cannot get environment var [curpath]\n");
     }
-    if(path[0] == '/')
-    {
+    if (path[0] == '/') {
         strcpy(curpath, path);
-    }
-    else
-    {
-        if(curpath[strlen(curpath) - 1] != '/')
+    } else {
+        if (curpath[strlen(curpath) - 1] != '/')
             strcat(curpath, "/");
         strcat(curpath, path);
     }
 
-    if((r = create(curpath, FTYPE_DIR)) < 0){
+    if ((r = create(curpath, FTYPE_DIR)) < 0) {
         fwritef(1, "Directory %s Already Exists!\n", curpath);
         return;
     }
@@ -32,31 +28,30 @@ mkdir(char *path, char *prefix)
 }
 
 void
-usage(void)
-{
-        fwritef(1, "usage: mkdir [-dFl] [file...]\n");
-        exit();
-} 
+usage(void) {
+    fwritef(1, "usage: mkdir [-dFl] [file...]\n");
+    exit();
+}
 
 void
-umain(int argc, char **argv)
-{  
+umain(int argc, char **argv) {
     int i;
-    ARGBEGIN{
-    default:
+    ARGBEGIN
+    {
+        default:
             usage();
-    case 'd':
-    case 'F':
-    case 'l':
-            flag[(u_char)ARGC()]++;
-            break;
-    }ARGEND
-
-    if (argc == 0){
-        return;    
+        case 'd':
+        case 'F':
+        case 'l':
+            flag[(u_char) ARGC()]++;
+        break;
     }
-    else {
-        for (i=0; i<argc; i++)
-                    mkdir(argv[i], argv[i]);
+    ARGEND
+
+    if (argc == 0) {
+        return;
+    } else {
+        for (i = 0; i < argc; i++)
+            mkdir(argv[i], argv[i]);
     }
 }

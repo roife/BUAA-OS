@@ -19,9 +19,8 @@ int debug_ = 0;
 #define WHITESPACE " \t\r\n"
 #define SYMBOLS "<|>&;()"
 
-    int
-_gettoken(char *s, char **p1, char **p2)
-{
+int
+_gettoken(char *s, char **p1, char **p2) {
     int t;
 
     if (s == 0) {
@@ -31,14 +30,14 @@ _gettoken(char *s, char **p1, char **p2)
     *p1 = 0;
     *p2 = 0;
 
-    while(strchr(WHITESPACE, *s))
+    while (strchr(WHITESPACE, *s))
         *s++ = 0;
-    if(*s == 0) {
+    if (*s == 0) {
         return 0;
     }
     if (*s == '\"') {
         *p1 = ++s;
-        while(*s && !(*s == '\"' && *(s-1) != '\\')) {
+        while (*s && !(*s == '\"' && *(s - 1) != '\\')) {
             ++s;
         }
         *s++ = 0;
@@ -46,7 +45,7 @@ _gettoken(char *s, char **p1, char **p2)
         return 'w';
     }
 
-    if (*s == '>' && *(s+1) == '>') {
+    if (*s == '>' && *(s + 1) == '>') {
         *p1 = s;
         *s++ = 0;
         *s++ = 0;
@@ -54,7 +53,7 @@ _gettoken(char *s, char **p1, char **p2)
         return 'a';
     }
 
-    if(strchr(SYMBOLS, *s)) {
+    if (strchr(SYMBOLS, *s)) {
         t = *s;
         *p1 = s;
         *s++ = 0;
@@ -62,7 +61,7 @@ _gettoken(char *s, char **p1, char **p2)
         return t;
     }
     *p1 = s;
-    while(*s && !strchr(WHITESPACE SYMBOLS, *s))
+    while (*s && !strchr(WHITESPACE SYMBOLS, *s))
         s++;
     *p2 = s;
     if (debug_ > 1) {
@@ -73,9 +72,8 @@ _gettoken(char *s, char **p1, char **p2)
     return 'w';
 }
 
-    int
-gettoken(char *s, char **p1)
-{
+int
+gettoken(char *s, char **p1) {
     static int c, nc;
     static char *np1, *np2;
 
@@ -90,9 +88,9 @@ gettoken(char *s, char **p1)
 }
 
 #define MAXARGS 16
-    void
-runcmd(char *s)
-{
+
+void
+runcmd(char *s) {
     history_save(s);
     char *argv[MAXARGS], *t;
     int argc, c, i, r, p[2], fd, rightpipe;
@@ -100,62 +98,62 @@ runcmd(char *s)
     int input_fd = -1, output_fd = -1;
     rightpipe = 0;
     gettoken(s, 0);
-again:
+    again:
     argc = 0;
-    for(;;){
+    for (;;) {
         c = gettoken(0, &t);
-        switch(c){
+        switch (c) {
             case 0:
                 goto runit;
             case 'w':
-                if(argc == MAXARGS){
+                if (argc == MAXARGS) {
                     writef("too many arguments\n");
                     exit();
                 }
                 argv[argc++] = t;
                 break;
             case '<':
-                if(gettoken(0, &t) != 'w'){
+                if (gettoken(0, &t) != 'w') {
                     writef("syntax error: < not followed by word\n");
                     exit();
                 }
-                if((r=open(t,O_RDONLY))<0)user_panic("< open failed");
-                fd=r;
+                if ((r = open(t, O_RDONLY)) < 0)user_panic("< open failed");
+                fd = r;
                 //dup(fd,0);
                 input_fd = fd;
                 //close(fd);
                 break;
             case '>':
-                if(gettoken(0, &t) != 'w'){
+                if (gettoken(0, &t) != 'w') {
                     writef("syntax error: > not followed by word\n");
                     exit();
                 }
-                if((r=open(t,O_WRONLY | O_CREAT))<0)user_panic("> open failed");
-                fd=r;
+                if ((r = open(t, O_WRONLY | O_CREAT)) < 0)user_panic("> open failed");
+                fd = r;
                 //dup(fd,1);
                 output_fd = fd;
                 //close(fd);
                 break;
             case 'a':
-                if(gettoken(0, &t) != 'w'){
+                if (gettoken(0, &t) != 'w') {
                     writef("syntax error: < not followed by word\n");
                     exit();
                 }
-                if((r=open(t, O_WRONLY | O_CREAT | O_APP))<0)user_panic(">> open failed");
-                fd=r;
+                if ((r = open(t, O_WRONLY | O_CREAT | O_APP)) < 0)user_panic(">> open failed");
+                fd = r;
                 //dup(fd,1);
                 output_fd = fd;
                 //close(fd);
                 break;
             case '|':
                 pipe(p);
-                if((rightpipe=fork())==0){
+                if ((rightpipe = fork()) == 0) {
                     input_fd = p[0];
                     //dup(p[0],0);
                     //close(p[0]);
                     close(p[1]);
                     goto again;
-                }else{
+                } else {
                     //dup(p[1],1);
                     output_fd = p[1];
                     //close(p[1]);
@@ -181,7 +179,7 @@ again:
         }
     }
 
-runit:
+    runit:
     if (input_fd != -1) {
         dup(input_fd, 0);
         close(input_fd);
@@ -190,7 +188,7 @@ runit:
         dup(output_fd, 1);
         close(output_fd);
     }
-    if(argc == 0) {
+    if (argc == 0) {
         if (debug_) writef("EMPTY COMMAND\n");
         return;
     }
@@ -217,12 +215,11 @@ runit:
 
     if (hang) {
         writef("[%d] WAIT\t", child_envid);
-        for (i=0; i<argc; ++i) writef("%s ", argv[i]);
+        for (i = 0; i < argc; ++i) writef("%s ", argv[i]);
         writef("\n");
     }
 
-    if((r = syscall_set_env_status(child_envid, ENV_RUNNABLE)) < 0)
-    {
+    if ((r = syscall_set_env_status(child_envid, ENV_RUNNABLE)) < 0) {
         writef("set child runnable is wrong\n");
     }
     r = child_envid;
@@ -236,8 +233,8 @@ runit:
             if (pid == 0) {
                 wait(r);
                 writef("\n[%d] DONE\t", r);
-                for (i=0; i<argc; ++i) writef("%s ", argv[i]);
-                
+                for (i = 0; i < argc; ++i) writef("%s ", argv[i]);
+
                 char curpath[MAXPATHLEN];
                 curpath_get(curpath);
                 writef("\n" LIGHT_BLUE(%s) " " BOLD_GREEN($) " ", curpath);
@@ -254,29 +251,27 @@ runit:
     exit();
 }
 
-    void
-flush(char *buf)
-{
+void
+flush(char *buf) {
     int i;
-    for(i = 0;i<strlen(buf);i++) writef("\b \b");
+    for (i = 0; i < strlen(buf); i++) writef("\b \b");
 }
 
-    void
-readline(char *buf, u_int n)
-{
+void
+readline(char *buf, u_int n) {
     int i, r, cmdi;
     char cmds[128][128];
     int cmdn = cmdi = history_read(cmds);
 
     r = 0;
-    for(i=0; i<n; i++){
-        if((r = read(0, buf+i, 1)) != 1){
-            if(r < 0)
+    for (i = 0; i < n; i++) {
+        if ((r = read(0, buf + i, 1)) != 1) {
+            if (r < 0)
                 writef("read error: %e", r);
             exit();
         }
 
-        if (i >= 2 && buf[i-2] == 27 && buf[i-1] == 91 && buf[i] == 65) { // Up arrow key
+        if (i >= 2 && buf[i - 2] == 27 && buf[i - 1] == 91 && buf[i] == 65) { // Up arrow key
             writef("%c%c%c", 27, 91, 66);
             for (i -= 2; i; --i) writef("\b \b");
 
@@ -285,21 +280,20 @@ readline(char *buf, u_int n)
 
             writef("%s", buf);
             i = strlen(buf) - 1;
-        } else if (i >= 2 && buf[i-2] == 27 && buf[i-1] == 91 && buf[i] == 66) { // Down arrow key
+        } else if (i >= 2 && buf[i - 2] == 27 && buf[i - 1] == 91 && buf[i] == 66) { // Down arrow key
             writef("%c%c%c", 27, 91, 65);
             if (cmdi < cmdn - 1) {
                 for (i -= 2; i; --i) writef("\b \b");
                 strcpy(buf, cmds[++cmdi]);
                 writef("%s", buf);
-            }
-            else {
-                buf[i-2] = buf[i-1] = buf[i] = '\0';
+            } else {
+                buf[i - 2] = buf[i - 1] = buf[i] = '\0';
             }
 
             i = strlen(buf) - 1;
-        } else if (i >= 2 && buf[i-2] == 27 && buf[i-1] == 91 && buf[i] == 68) { // Left arrow key
+        } else if (i >= 2 && buf[i - 2] == 27 && buf[i - 1] == 91 && buf[i] == 68) { // Left arrow key
             writef("%c%c%c", 27, 91, 67);
-        } else if (i >= 2 && buf[i-2] == 27 && buf[i-1] == 91 && buf[i] == 67) { // Right arrow key
+        } else if (i >= 2 && buf[i - 2] == 27 && buf[i - 1] == 91 && buf[i] == 67) { // Right arrow key
             writef("%c%c%c", 27, 91, 68);
         }
 
@@ -309,7 +303,7 @@ readline(char *buf, u_int n)
             i -= 1;
         }
 
-        if(buf[i] == '\b' || buf[i] == 127){
+        if (buf[i] == '\b' || buf[i] == 127) {
             if (i > 0) {
                 buf[i] = 0;
                 flush(buf);
@@ -322,29 +316,27 @@ readline(char *buf, u_int n)
                 i -= 1;
             }
         }
-        if(buf[i] == '\r' || buf[i] == '\n'){
+        if (buf[i] == '\r' || buf[i] == '\n') {
             buf[i] = 0;
             return;
         }
     }
     writef("line too long\n");
-    while((r = read(0, buf, 1)) == 1 && buf[0] != '\n')
-        ;
+    while ((r = read(0, buf, 1)) == 1 && buf[0] != '\n');
     buf[0] = 0;
-}	
+}
 
 
-    void
-usage(void)
-{
+void
+usage(void) {
     writef("usage: sh [-dix] [command-file]\n");
     exit();
 }
 
 char buf[1024];
-    void
-umain(int argc, char **argv)
-{
+
+void
+umain(int argc, char **argv) {
     int r, interactive, echocmds;
     interactive = '?';
     echocmds = 0;
@@ -353,35 +345,37 @@ umain(int argc, char **argv)
     writef("::              Naive Shell  V0.0.0_2                      ::\n");
     writef("::                                                         ::\n");
     writef(":::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::\n");
-    ARGBEGIN{
+    ARGBEGIN
+    {
         case 'd':
             debug_++;
-            break;
+        break;
         case 'i':
             interactive = 1;
-            break;
+        break;
         case 'x':
             echocmds = 1;
-            break;
+        break;
         default:
             usage();
-    }ARGEND
+    }
+    ARGEND
 
-    if(argc > 1)
+    if (argc > 1)
         usage();
-    if(argc == 1){
+    if (argc == 1) {
         close(0);
         if ((r = open(argv[1], O_RDONLY)) < 0)
             user_panic("open %s: %e", r);
-        user_assert(r==0);
+        user_assert(r == 0);
     }
-    if(interactive == '?')
+    if (interactive == '?')
         interactive = iscons(0);
 
     history_init();
     curpath_init("/");
 
-    for(;;){
+    for (;;) {
         char curpath[MAXPATHLEN];
         curpath_get(curpath);
         if (interactive)

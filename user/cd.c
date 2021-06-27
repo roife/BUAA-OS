@@ -2,15 +2,13 @@
 #include "sh.h"
 
 void
-usage(void)
-{
+usage(void) {
     fwritef(1, "usage: cd [dir]\n");
     exit();
-} 
+}
 
 void
-umain(int argc, char **argv)
-{
+umain(int argc, char **argv) {
     int i, r;
     if (argc == 1) {
         fwritef(1, "cd: too few args");
